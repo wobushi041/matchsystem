@@ -1,29 +1,21 @@
-package com.wobushi041.matchsystem.model.domain;
+package com.wobushi041.matchsystem.model.vo;
 
-import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
-import lombok.Data;
 
-/**
- * 队伍
- * @TableName team
- */
-@TableName(value ="team")
 @Data
-public class Team implements Serializable {
+public class TeamUserVO implements Serializable {
 
 
-    @TableField(exist = false)
-    private final static long serialVersionUID = 3673266922282662709L;
+    private static final long serialVersionUID = 9138973079051132588L;
 
 
 
     /**
      * id
      */
-    @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
@@ -47,7 +39,7 @@ public class Team implements Serializable {
     private Date expireTime;
 
     /**
-     * 队长id
+     * 用户id
      */
     private Long userId;
 
@@ -55,11 +47,6 @@ public class Team implements Serializable {
      * 0 - 公开，1 - 私有，2 - 加密
      */
     private Integer status;
-
-    /**
-     * 密码，vo不暴露
-     */
-    private String password;
 
     /**
      * 创建时间
@@ -72,8 +59,19 @@ public class Team implements Serializable {
     private Date updateTime;
 
     /**
-     * 是否删除
+     * 创建人用户信息
      */
-    @TableLogic
-    private Integer isDelete;
+    private UserVO createUser;
+
+    /**
+     * 已加入的用户数
+     */
+    private Integer hasJoinNum;
+
+    /**
+     * 是否已加入队伍
+     * 用于前端展示加入队伍状态
+     */
+    private boolean hasJoin = false;
+
 }

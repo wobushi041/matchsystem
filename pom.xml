@@ -89,6 +89,12 @@
             <artifactId>commons-lang3</artifactId>
             <version>3.12.0</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils -->
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.9.4</version>
+        </dependency>
         <!-- 接口文档：Knife4j OpenAPI3 Starter（适配 Spring Boot 2.x） -->
         <dependency>
             <groupId>com.github.xiaoymin</groupId>

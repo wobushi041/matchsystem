@@ -16,7 +16,7 @@ public class Tag {
      * id
      */
     @TableId(type = IdType.AUTO)
-    private Long id;
+    private long id;
 
     /**
      * 标签名

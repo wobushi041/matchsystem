@@ -10,8 +10,11 @@ import com.wobushi041.matchsystem.exception.BusinessException;
 import com.wobushi041.matchsystem.model.domain.User;
 import com.wobushi041.matchsystem.service.UserService;
 import com.wobushi041.matchsystem.mapper.UserMapper;
+import com.wobushi041.matchsystem.utils.AlgorithmUtils;
+import kotlin.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.scripting.xmltags.ForEachSqlNode;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
@@ -19,8 +22,7 @@ import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -178,6 +180,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         safetyUser.setUserRole(originUser.getUserRole());
         safetyUser.setUserStatus(originUser.getUserStatus());
         safetyUser.setCreateTime(originUser.getCreateTime());
+        safetyUser.setTags(originUser.getTags());
         return safetyUser;
     }
 
@@ -185,7 +188,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public User getLoginUserFromRequest(HttpServletRequest request) {
         Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
         if (userObj == null) {
-            throw new BusinessException(ErrorCode.NULL_ERROR);
+            throw new BusinessException(ErrorCode.NULL_ERROR,"用户未登录");
         }
         return (User) userObj;
     }
@@ -209,10 +212,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      */
     @Override
     public List<User> searchUsersByTagId(List<String> tagNamelist) {
-        //检查标签列表是否为空
-        if(ObjectUtils.isEmpty(tagNamelist)){
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
         // 初始化查询包装器，并拼接标签的 AND 查询条件
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         for (String tagName : tagNamelist) {
@@ -301,6 +300,68 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return loginUser != null && loginUser.getUserRole() == UserConstant.ADMIN_ROLE;
     }
 
+/**
+ * 匹配用户方法。
+ * 根据当前用户的标签找出数据库中标签相似的用户。
+ * 这个方法首先过滤出所有有标签的用户，然后使用编辑距离算法（Levenshtein distance）
+ * 计算标签相似度，最后返回相似度最高的用户列表。
+ * @param num 需要返回的用户数量，此数值应大于0且不超过20。
+ * @param loginUser 当前登录的用户对象，用于从中提取标签进行比较。
+ * @return 返回一个列表，包含与当前用户标签最相似的其他用户。
+ */
+    @Override
+    public List<User> matchUsers(long num, User loginUser) {
+        // 初始化查询条件，确保用户的标签不为空
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.isNotNull("tags"); // 确保查询的用户有标签信息
+        queryWrapper.select("id", "tags"); // 仅选择id和tags字段进行查询，以减少数据量
+        // 获取数据库中所有带标签的用户列表
+        List<User> userList = this.list(queryWrapper);
+        // 将当前用户的标签从JSON字符串转换为List
+        String tags = loginUser.getTags();
+        Gson gson = new Gson();
+        List<String> tagList = gson.fromJson(tags, new TypeToken<List<String>>(){}.getType());
+        // 准备用于存储用户与距离信息的列表
+        List<Pair<User, Long>> list = new ArrayList<>();
+        for (User user : userList) {
+            String userTags = user.getTags();
+            // 排除空标签以及当前用户自己
+            if (StringUtils.isBlank(userTags) || user.getId() == loginUser.getId()) {
+                continue;
+            }
+            List<String> userTagList = gson.fromJson(userTags, new TypeToken<List<String>>(){}.getType());
+            // 过滤空标签列表
+            if (CollectionUtils.isEmpty(userTagList)) {
+                continue;
+            }
+            // 计算标签列表之间的编辑距离
+            long distance = AlgorithmUtils.minDistance(tagList, userTagList);
+            //log.info("用户 {} 的标签: {}, 编辑距离: {}", user.getId(), userTagList, distance);
+            list.add(new Pair<>(user, distance));
+        }
+        // 按编辑距离进行排序并获取距离最小的前num个用户
+        List<Pair<User, Long>> topUserPairList = list.stream()
+                .sorted(Comparator.comparingLong(Pair::getSecond))  // 根据配对中的值（距离）进行排序
+                .limit(num)  // 限制结果数量，只取距离最小的前num个用户
+                .collect(Collectors.toList());  // 收集最终的配对列表
+        // 提取最匹配的用户ID列表
+        List<Long> userListVo = topUserPairList.stream()
+                .map(pair -> pair.getFirst().getId())  // 从配对中提取用户ID
+                .collect(Collectors.toList());
+        // 根据ID重新查询用户信息，并进行脱敏处理
+        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
+        userQueryWrapper.in("id", userListVo);  // 使用用户ID过滤查询
+        Map<Long, List<User>> userIdUserListMap = this.list(userQueryWrapper)
+                .stream()
+                .map(this::getSafetyUser)  // 对用户信息进行脱敏处理
+                .collect(Collectors.groupingBy(User::getId));  // 按用户ID进行分组
+        // 按照 userListVo 的顺序组装最终的用户列表，保持相似度排序
+        List<User> finalUserList = new ArrayList<>();
+        for (Long userId : userListVo) {
+            finalUserList.add(userIdUserListMap.get(userId).get(0));  // 从映射中获取用户并添加到最终列表
+        }
+        return finalUserList;
+    }
     /**
      * User user:前端传来的要更改的user；User loginUser：当前登录用户，
      * 要判断是不是管理员，不是的话判断是不是修改本人的字段(userId==loginUserId)

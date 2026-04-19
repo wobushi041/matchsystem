@@ -35,6 +35,8 @@ public interface UserService extends IService<User> {
      */
     User userLogin(String userAccount, String userPassword, HttpServletRequest request);
 
+    int updateUser(User user, User loginUser);
+
     /**
      * 用户注销
      *
@@ -52,9 +54,6 @@ public interface UserService extends IService<User> {
     User getSafetyUser(User originUser);
 
     User getLoginUserFromRequest(HttpServletRequest request);
-
-
-
 
     /**
      * 基于SQL查询，根据标签搜索用户
@@ -74,6 +73,6 @@ public interface UserService extends IService<User> {
 
     boolean isAdmin(User loginUser);
 
+    List<User> matchUsers(long num,User loginUser);
 
-    int updateUser(User user, User loginUser);
 }
