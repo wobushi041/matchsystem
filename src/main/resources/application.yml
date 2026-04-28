@@ -23,10 +23,35 @@ spring:
     host: localhost
     password: 123456
     database: 0
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        default-requeue-rejected: false
   session:
     # session 失效时间
     timeout: 86400
     store-type: redis
+
+match:
+  cache:
+    warmup:
+      bootstrap-enabled: true
+      seed-user-ids: 1
+      default-page-num: 1
+      default-page-size: 20
+      # 兜底延时，动态延时不可用时使用
+      delay-millis: 10000
+      # 逻辑过期时间
+      logic-expire-millis: 100000
+      # 提前多久触发下一次刷新
+      refresh-ahead-millis: 0
+      #缓存TTL时间
+      redis-ttl-minutes: 720
+      lock-lease-seconds: 30
 
 
 
@@ -50,4 +75,3 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: true
-

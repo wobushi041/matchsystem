@@ -1,6 +1,6 @@
 package com.wobushi041.matchsystem.common;
 
-// 讲师 【coder_鱼_皮】 https://space.bilibili.com/12890453/
+//ErrorCode 的作用是把系统中常见的错误码、错误消息和描述预定义成枚举常量，避免重复硬编码，并保证异常处理和接口返回的语义统一。
 
 
 

@@ -6,42 +6,38 @@ import com.wobushi041.matchsystem.common.BaseResponse;
 import com.wobushi041.matchsystem.common.ErrorCode;
 import com.wobushi041.matchsystem.common.ResultUtils;
 import com.wobushi041.matchsystem.exception.BusinessException;
-import com.wobushi041.matchsystem.mapper.UserMapper;
 import com.wobushi041.matchsystem.model.domain.User;
 import com.wobushi041.matchsystem.model.request.UserLoginRequest;
 import com.wobushi041.matchsystem.model.request.UserRegisterRequest;
+import com.wobushi041.matchsystem.service.RecommendCacheService;
 import com.wobushi041.matchsystem.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.Min;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.wobushi041.matchsystem.contant.UserConstant.USER_LOGIN_STATE;
 
 /**
  * 用户接口
- *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
  */
 @RestController
 @RequestMapping("/user")
 @Slf4j
+@Validated
 public class UserController {
 
     @Resource
     private UserService userService;
     @Resource
-    private RedisTemplate<String, Object> redisTemplate;
-    @Resource
-    private UserMapper userMapper;
+    private RecommendCacheService recommendCacheService;
 
     /**
      * 用户注册
@@ -50,19 +46,8 @@ public class UserController {
      * @return
      */
     @PostMapping("/register")
-    public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
-        // 校验
-        if (userRegisterRequest == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        String userAccount = userRegisterRequest.getUserAccount();
-        String userPassword = userRegisterRequest.getUserPassword();
-        String checkPassword = userRegisterRequest.getCheckPassword();
-        String planetCode = userRegisterRequest.getPlanetCode();
-        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword, planetCode)) {
-            return null;
-        }
-        long result = userService.userRegister(userAccount, userPassword, checkPassword, planetCode);
+    public BaseResponse<Long> userRegister(@RequestBody @Validated UserRegisterRequest userRegisterRequest) {
+        long result = userService.userRegister(userRegisterRequest.getUserAccount(), userRegisterRequest.getUserPassword(), userRegisterRequest.getCheckPassword(), userRegisterRequest.getPlanetCode());
         return ResultUtils.success(result);
     }
 
@@ -74,16 +59,8 @@ public class UserController {
      * @return
      */
     @PostMapping("/login")
-    public BaseResponse<User> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
-        if (userLoginRequest == null) {
-            return ResultUtils.error(ErrorCode.PARAMS_ERROR);
-        }
-        String userAccount = userLoginRequest.getUserAccount();
-        String userPassword = userLoginRequest.getUserPassword();
-        if (StringUtils.isAnyBlank(userAccount, userPassword)) {
-            return ResultUtils.error(ErrorCode.PARAMS_ERROR);
-        }
-        User user = userService.userLogin(userAccount, userPassword, request);
+    public BaseResponse<User> userLogin(@RequestBody @Validated UserLoginRequest userLoginRequest, HttpServletRequest request) {
+        User user = userService.userLogin(userLoginRequest.getUserAccount(),userLoginRequest.getUserPassword(), request);
         return ResultUtils.success(user);
     }
 
@@ -96,7 +73,7 @@ public class UserController {
     @PostMapping("/logout")
     public BaseResponse<Integer> userLogout(HttpServletRequest request) {
         if (request == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"参数为空");
         }
         int result = userService.userLogout(request);
         return ResultUtils.success(result);
@@ -152,12 +129,9 @@ public class UserController {
      * @return
      */
     @PostMapping("/delete")
-    public BaseResponse<Boolean> deleteUser(@RequestBody long id, HttpServletRequest request) {
+    public BaseResponse<Boolean> deleteUser(@RequestParam @Min(value = 1,message = "id非法") long id, HttpServletRequest request) {
         if (!userService.isAdmin(request)) {
             throw new BusinessException(ErrorCode.NO_AUTH);
-        }
-        if (id <= 0) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         boolean b = userService.removeById(id);
         return ResultUtils.success(b);
@@ -168,12 +142,6 @@ public class UserController {
      */
     @PostMapping("/update")
     public BaseResponse<Long> updateUser(@RequestBody User user, HttpServletRequest request) {
-        if (!userService.isAdmin(request)) {
-            throw new BusinessException(ErrorCode.NO_AUTH);
-        }
-        if (user == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
         User loginUserFromRequest = userService.getLoginUserFromRequest(request);
         long result = userService.updateUser(user, loginUserFromRequest);
         return ResultUtils.success(result);
@@ -183,7 +151,6 @@ public class UserController {
      * 推荐用户列表接口。
      * 该接口不进行权限校验，向所有请求者开放。利用Redis缓存优化性能，如果缓存中存在用户数据，则直接返回，否则查询数据库,然后再写进缓存。
      * 使用分页查询来优化数据加载，只返回请求的页面数据。
-     *
      * @param pageSize 每页显示的用户数，决定返回的用户列表长度。
      * @param pageNum  请求的页码，决定数据分页的起点。
      * @param request  HTTP请求对象，用于获取当前登录用户信息和未来可能的权限校验。
@@ -191,34 +158,11 @@ public class UserController {
      */
     @GetMapping("/recommend")
     public BaseResponse<Page<User>> recommendUsers(long pageSize, long pageNum, HttpServletRequest request) {
-        // 通过请求获取当前登录用户
         User loginUserFromRequest = userService.getLoginUserFromRequest(request);
-        // 格式化Redis键值，以用户ID作为唯一标识
-        String redisKey = String.format("yupao:user:recommend:%s", loginUserFromRequest.getId());
-        ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
-        // 尝试从Redis获取缓存的用户分页数据
-        Page<User> userPage = (Page<User>) valueOperations.get(redisKey);
-        if (userPage != null) {
-            // 如果缓存存在，直接返回缓存数据
-            return ResultUtils.success(userPage);
-        }
-        // 缓存不存在时，创建查询包装器，默认不设置查询条件，查询所有用户
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        // 使用服务层的分页方法查询用户，自动处理数据分页
-        userPage = userService.page(new Page<>(pageNum, pageSize), queryWrapper);
-        // 查询结果存入Redis缓存，并设置有效期为30000毫秒（30秒），以控制数据的新鲜度。
-        // 异常处理用于捕获并记录设置缓存时可能出现的Redis操作错误。
-        try {
-            //TimeUnit.SECONDS（秒）
-            //TimeUnit.MINUTES（分）
-            //TimeUnit.HOURS（小时）
-            valueOperations.set(redisKey, userPage, 30, TimeUnit.MINUTES);
-        } catch (Exception e) {
-            log.error("redis set key error", e);
-        }
-        // 返回从数据库查询到的用户列表
+        Page<User> userPage = recommendCacheService.getRecommendUsers(pageNum, pageSize,loginUserFromRequest.getId());
         return ResultUtils.success(userPage);
     }
+
 
     @GetMapping("/match")
     public BaseResponse<List<User>> matchUsers(long num, HttpServletRequest request) {
@@ -237,7 +181,7 @@ public class UserController {
      * @return
      */
     @GetMapping("/search/tags")
-    public BaseResponse<List<User>> searchUsers(@RequestParam(required = false) List<String> tagNameList) {
+    public BaseResponse<List<User>> searchUsersByTagId(@RequestParam(required = false) List<String> tagNameList) {
         //检查标签列表是否为空
         if (CollectionUtils.isEmpty(tagNameList)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "标签不能为空");

@@ -4,18 +4,42 @@ import com.wobushi041.matchsystem.common.BaseResponse;
 import com.wobushi041.matchsystem.common.ErrorCode;
 import com.wobushi041.matchsystem.common.ResultUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+import java.util.stream.Collectors;
 
 /**
  * 全局异常处理器
- *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
  */
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public BaseResponse<?> methodArgumentNotValidExceptionHandler(MethodArgumentNotValidException e) {
+        log.error("methodArgumentNotValidException", e);
+        String description = e.getBindingResult().getFieldErrors().stream()
+                .map(FieldError::getDefaultMessage)
+                .filter(message -> message != null && !message.isEmpty())
+                .findFirst()
+                .orElse(ErrorCode.PARAMS_ERROR.getMessage());
+        return ResultUtils.error(ErrorCode.PARAMS_ERROR.getCode(), ErrorCode.PARAMS_ERROR.getMessage(), description);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public BaseResponse<?> constraintViolationExceptionHandler(ConstraintViolationException e) {
+        log.error("constraintViolationException", e);
+        String description = e.getConstraintViolations().stream()
+                .map(ConstraintViolation::getMessage)
+                .filter(message -> message != null && !message.isEmpty())
+                .collect(Collectors.joining(", "));
+        return ResultUtils.error(ErrorCode.PARAMS_ERROR.getCode(), ErrorCode.PARAMS_ERROR.getMessage(), description);
+    }
 
     @ExceptionHandler(BusinessException.class)
     public BaseResponse<?> businessExceptionHandler(BusinessException e) {
@@ -23,7 +47,6 @@ public class GlobalExceptionHandler {
         return ResultUtils.error(e.getCode(), e.getMessage(), e.getDescription());
     }
 
-    //https://github.com/liyupi
 
     @ExceptionHandler(RuntimeException.class)
     public BaseResponse<?> runtimeExceptionHandler(RuntimeException e) {

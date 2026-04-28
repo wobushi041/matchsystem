@@ -26,7 +26,7 @@ class InsertUsersTest {
     public void doInsertUsers() {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        final int INSERT_COUNT = 5000;
+        final int INSERT_COUNT = 100000;
         for (int i = 0; i < INSERT_COUNT; i++) {
             User user = new User();
             user.setUsername("041041");
@@ -39,7 +39,7 @@ class InsertUsersTest {
             user.setUserStatus(0);
             user.setUserRole(0);
             user.setPlanetCode("12");
-            user.setTags("");
+            user.setTags("[\"java\",\"python\"]");
             userMapper.insert(user);
         }
         stopWatch.stop();
@@ -77,7 +77,7 @@ class InsertUsersTest {
                 user.setUserStatus(0);
                 user.setUserRole(0);
                 user.setPlanetCode("12");
-                user.setTags("[]");
+                user.setTags("[\"java\",\"python\"]");
                 userMapper.insert(user);
             }
             // 异步执行数据库插入操作

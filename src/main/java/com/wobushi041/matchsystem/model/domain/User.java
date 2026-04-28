@@ -2,6 +2,7 @@ package com.wobushi041.matchsystem.model.domain;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -11,6 +12,7 @@ import java.util.Date;
  */
 @TableName(value = "user")
 @Data
+@NoArgsConstructor
 public class User implements Serializable {
     /**
      * 序列化版本号

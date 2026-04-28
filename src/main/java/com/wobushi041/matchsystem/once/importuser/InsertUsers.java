@@ -90,7 +90,7 @@ public class InsertUsers {
                 user.setUserStatus(0);
                 user.setUserRole(0);
                 user.setPlanetCode("12");
-                user.setTags("");
+                user.setTags("java，python，c++，go");
                 userMapper.insert(user);
             }
             // 异步执行数据库插入操作

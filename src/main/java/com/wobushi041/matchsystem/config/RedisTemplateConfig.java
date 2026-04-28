@@ -12,8 +12,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
-import javax.swing.*;
-
 
 @Configuration
 //自定义 RedisTemplate Bean ，覆盖 Spring Boot 默认配置的实例。项目中注入并使用的是自定义封装了序列化方式的实例，而非默认的

@@ -3,6 +3,7 @@ package com.wobushi041.matchsystem.config;
 import lombok.Data;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
+import org.redisson.codec.JsonJacksonCodec;
 import org.redisson.config.Config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -29,6 +30,8 @@ public class RedissonConfig {
     public RedissonClient redissonClient() {
         // 1. 创建配置
         Config config = new Config();
+        // 显式指定 Redisson 的 JSON 序列化方式，不依赖 Spring 默认序列化器
+        config.setCodec(new JsonJacksonCodec());
         String redisAddress = String.format("redis://%s:%s", host, port);
         // 写到3库
         config.useSingleServer().setAddress(redisAddress).setDatabase(3);

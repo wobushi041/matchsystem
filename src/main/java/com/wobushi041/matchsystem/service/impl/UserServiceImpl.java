@@ -31,9 +31,6 @@ import static com.wobushi041.matchsystem.contant.UserConstant.USER_LOGIN_STATE;
 
 /**
  * 用户服务实现类
- *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
  */
 @Service
 @Slf4j
@@ -45,7 +42,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     /**
      * 盐值，混淆密码
      */
-    private static final String SALT = "yupi";
+    private static final String SALT = "041";
 
 
 
@@ -61,28 +58,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      */
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword, String planetCode) {
-        // 1. 校验
-        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword, planetCode)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
-        }
-        if (userAccount.length() < 4) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账号过短");
-        }
-        if (userPassword.length() < 8 || checkPassword.length() < 8) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户密码过短");
-        }
-        if (planetCode.length() > 5) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "星球编号过长");
-        }
         // 账户不能包含特殊字符
         String validPattern = "[`~!@#$%^&*()+=|{}':;',\\\\[\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
         Matcher matcher = Pattern.compile(validPattern).matcher(userAccount);
         if (matcher.find()) {
-            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号包含特殊字符");
         }
         // 密码和校验密码相同
         if (!userPassword.equals(checkPassword)) {
-            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码和校验密码不相同");
         }
         // 账户不能重复
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
@@ -122,23 +106,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      */
     @Override
     public User userLogin(String userAccount, String userPassword, HttpServletRequest request) {
-        // 1. 校验
-        if (StringUtils.isAnyBlank(userAccount, userPassword)) {
-            return null;
-        }
-        if (userAccount.length() < 4) {
-            return null;
-        }
-        if (userPassword.length() < 8) {
-            return null;
-        }
         // 账户不能包含特殊字符
         String validPattern = "[`~!@#$%^&*()+=|{}':;',\\\\[\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
         Matcher matcher = Pattern.compile(validPattern).matcher(userAccount);
         if (matcher.find()) {
             return null;
         }
-        // 2. 加密
+        //  加密
         String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
         // 查询用户是否存在
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
@@ -365,19 +339,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     /**
      * User user:前端传来的要更改的user；User loginUser：当前登录用户，
      * 要判断是不是管理员，不是的话判断是不是修改本人的字段(userId==loginUserId)
-     * 最后调用userMapper.updataById(user)更新数据库
-     * @param user
-     * @param loginUser
-     *  @return 更新操作影响的数据库记录数。通常返回1表示更新成功，返回0表示未进行更新。
+     * 最后调用userMapper.updateById(user)更新数据库
+     * @return 更新操作影响的数据库记录数。通常返回1表示更新成功，返回0表示未进行更新。
      */
     @Override
-    public int updateUser(User user, User loginUser) {
-//        userId作用:校验，数据库查询和更新对应user
+    public int updateUser(User user, User loginUserFromRequest) {
+        //userId作用:校验，数据库查询和更新对应user
         long userId = user.getId();
-        if (userId<=0){
+        if (userId <= 0){
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        if(!isAdmin(loginUser)&&loginUser.getId()!=userId){
+        if(!isAdmin(loginUserFromRequest)&&loginUserFromRequest.getId()!=userId){
             throw new BusinessException(ErrorCode.NO_AUTH);
         }
         User oldUser = userMapper.selectById(userId);
