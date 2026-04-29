@@ -11,6 +11,12 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.UUID;
 
+/**
+ * 把缓存预热任务包装成message，并投递消息
+ * 1.生成任务消息对象RecommendCacheWarmupMessage
+ * 2.给消息设置延迟时间
+ * 3.吧消息发送给对应交换机
+ */
 @Component
 @Slf4j
 public class CacheWarmupProducer {
@@ -23,31 +29,30 @@ public class CacheWarmupProducer {
     @Value("${match.cache.warmup.delay-millis}")
     private long delayMillis;
 
+    /**
+     * 按默认延迟时间发送任务
+     * @param message
+     */
     public void scheduleWarmupTask(RecommendCacheWarmupMessage message) {
         sendDelayMessage(message, delayMillis);
     }
 
+    /**
+     * 按指定延迟时间发送任务
+     * @param message
+     * @param delayMillis
+     */
     public void scheduleWarmupTask(RecommendCacheWarmupMessage message, long delayMillis) {
         sendDelayMessage(message, delayMillis);
     }
 
     /**
-     * 启动时立即触发一次预热，避免首轮等待 delay-millis。
+     * 发送延时消息方法
+     * 真正执行 MQ 投递
+     * 发到 cache.warmup.delay.exchange
+     * 路由到延时队列
+     * 给消息设置 expiration
      */
-    public void scheduleWarmupTaskNow(RecommendCacheWarmupMessage message) {
-        rabbitTemplate.convertAndSend(
-                RabbitMqConfig.CACHE_WARMUP_EXECUTE_EXCHANGE,
-                RabbitMqConfig.CACHE_WARMUP_EXECUTE_ROUTING_KEY,
-                message,
-                msg -> {
-                    msg.getMessageProperties().setDeliveryMode(MessageDeliveryMode.PERSISTENT);
-                    return msg;
-                });
-        log.info("dispatch immediate warmup message, taskId={}, runId={}",
-                message.getTaskId(), message.getRunId());
-    }
-
-    //发送延时消息方法
     public void sendDelayMessage(RecommendCacheWarmupMessage message, long delayMillis) {
         rabbitTemplate.convertAndSend(
                 //目标交换机
@@ -56,7 +61,8 @@ public class CacheWarmupProducer {
                 RabbitMqConfig.CACHE_WARMUP_DELAY_ROUTING_KEY,
                 message,
                 msg -> {
-                    //设置过期时间
+                    //设置过期时间，这条消息先放进延时队列，
+                    //等 delayMillis 毫秒后过期，过期后由 RabbitMQ 自动转发到执行队列
                     msg.getMessageProperties().setExpiration(String.valueOf(delayMillis));
                     //设置消息持久化
                     msg.getMessageProperties().setDeliveryMode(MessageDeliveryMode.PERSISTENT);
@@ -67,10 +73,14 @@ public class CacheWarmupProducer {
 
     }
 
-
+    /**
+     * 生成任务消息对象RecommendCacheWarmupMessage并封装
+     */
     public RecommendCacheWarmupMessage newWarmupMessage(long userId, long pageNum, long pageSize) {
         RecommendCacheWarmupMessage message = new RecommendCacheWarmupMessage();
+        //标识“这是谁的哪一页推荐缓存任务”
         message.setTaskId(String.format(TASK_ID_FORMAT, userId, pageNum, pageSize));
+        //标识“这一次具体投递的消息实例”
         message.setRunId(UUID.randomUUID().toString());
         message.setUserId(userId);
         message.setPageNum(pageNum);

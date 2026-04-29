@@ -17,7 +17,6 @@ import java.util.regex.Pattern;
  */
 @Data
 @NoArgsConstructor
-
 /**
  * Spring 接收 @RequestBody JSON 并交给 Jackson 反序列化，Jackson 默认最容易识别、也最通用的方式就是：
  * 先调用无参构造

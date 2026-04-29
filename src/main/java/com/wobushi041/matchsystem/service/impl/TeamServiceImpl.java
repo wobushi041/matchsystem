@@ -301,7 +301,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         }
         long userId = loginUser.getId();
         // 只有一个线程能获取到锁
-        RLock lock = redissonClient.getLock("yupao:joinTeam:join_team");
+        RLock lock = redissonClient.getLock("matchsystem:joinTeam:join_team");
         try {
             // 抢到锁并执行
             while (true) {

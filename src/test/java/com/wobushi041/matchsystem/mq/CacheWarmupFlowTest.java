@@ -28,7 +28,6 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -92,27 +91,6 @@ class CacheWarmupFlowTest {
 
         assertEquals("30000", processedMessage.getMessageProperties().getExpiration());
         assertEquals(MessageDeliveryMode.PERSISTENT, processedMessage.getMessageProperties().getDeliveryMode());
-    }
-
-    @Test
-    void scheduleWarmupTaskNow_shouldDispatchToExecuteExchange() {
-        RecommendCacheWarmupMessage message = cacheWarmupProducer.newWarmupMessage(1002L, 1L, 10L);
-
-        cacheWarmupProducer.scheduleWarmupTaskNow(message);
-
-        ArgumentCaptor<MessagePostProcessor> postProcessorCaptor =
-                ArgumentCaptor.forClass(MessagePostProcessor.class);
-        verify(rabbitTemplate).convertAndSend(
-                eq(RabbitMqConfig.CACHE_WARMUP_EXECUTE_EXCHANGE),
-                eq(RabbitMqConfig.CACHE_WARMUP_EXECUTE_ROUTING_KEY),
-                eq(message),
-                postProcessorCaptor.capture());
-
-        Message processedMessage = postProcessorCaptor.getValue().postProcessMessage(
-                new Message("{}".getBytes(StandardCharsets.UTF_8), new MessageProperties()));
-
-        assertEquals(MessageDeliveryMode.PERSISTENT, processedMessage.getMessageProperties().getDeliveryMode());
-        assertNull(processedMessage.getMessageProperties().getExpiration());
     }
 
     @Test

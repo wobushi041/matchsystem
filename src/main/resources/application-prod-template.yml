@@ -1,0 +1,61 @@
+# 生产环境模板
+
+spring:
+  application:
+    name: matchsystem
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/matchsystem}
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:replace_me}
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:replace_me}
+    database: ${REDIS_DATABASE:0}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        default-requeue-rejected: false
+  session:
+    timeout: 86400
+    store-type: redis
+
+match:
+  cache:
+    warmup:
+      bootstrap-enabled: ${MATCH_CACHE_WARMUP_BOOTSTRAP_ENABLED:true}
+      seed-user-ids: ${MATCH_CACHE_WARMUP_SEED_USER_IDS:1}
+      default-page-num: ${MATCH_CACHE_WARMUP_DEFAULT_PAGE_NUM:1}
+      default-page-size: ${MATCH_CACHE_WARMUP_DEFAULT_PAGE_SIZE:20}
+      delay-millis: ${MATCH_CACHE_WARMUP_DELAY_MILLIS:43200000}
+      logic-expire-millis: ${MATCH_CACHE_WARMUP_LOGIC_EXPIRE_MILLIS:43200000}
+      refresh-ahead-millis: ${MATCH_CACHE_WARMUP_REFRESH_AHEAD_MILLIS:1800000}
+      redis-ttl-minutes: ${MATCH_CACHE_WARMUP_REDIS_TTL_MINUTES:1440}
+      lock-lease-seconds: ${MATCH_CACHE_WARMUP_LOCK_LEASE_SECONDS:30}
+
+server:
+  address: 0.0.0.0
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: isDelete
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+knife4j:
+  enable: true
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true

@@ -14,7 +14,8 @@ import org.springframework.context.annotation.Configuration;
  * Redisson是一个基于Redis的Java驻留式内存数据网格（In-Memory Data Grid），用于分布式应用程序，提供分布式Java对象和服务支持。
  */
 @Configuration
-@ConfigurationProperties(prefix = "spring.redis")// 用于将配置文件中以特定前缀开头的属性值映射到一个Java Bean 中。
+// 用于将配置文件中以特定前缀开头的属性值映射到一个Java Bean 中。
+@ConfigurationProperties(prefix = "spring.redis")
 @Data
 public class RedissonConfig {
 
