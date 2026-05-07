@@ -3,7 +3,7 @@ package com.wobushi041.matchsystem.service;
 import com.wobushi041.matchsystem.model.domain.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /**

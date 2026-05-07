@@ -17,9 +17,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.Min;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.Min;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -108,7 +108,7 @@ public class UserController {
      * @return
      */
     @GetMapping("/search")
-    public BaseResponse<List<User>> searchUsers(String username, HttpServletRequest request) {
+    public BaseResponse<List<User>> searchUsers(@RequestParam(value = "username")String username, HttpServletRequest request) {
         if (!userService.isAdmin(request)) {
             throw new BusinessException(ErrorCode.NO_AUTH, "缺少管理员权限");
         }
@@ -129,7 +129,7 @@ public class UserController {
      * @return
      */
     @PostMapping("/delete")
-    public BaseResponse<Boolean> deleteUser(@RequestParam @Min(value = 1,message = "id非法") long id, HttpServletRequest request) {
+    public BaseResponse<Boolean> deleteUser(@RequestParam(value = "id") @Min(value = 1,message = "id非法") long id, HttpServletRequest request) {
         if (!userService.isAdmin(request)) {
             throw new BusinessException(ErrorCode.NO_AUTH);
         }
@@ -157,7 +157,7 @@ public class UserController {
      * @return 返回经过脱敏处理的用户列表，保护用户隐私，包裹在统一响应结构中。
      */
     @GetMapping("/recommend")
-    public BaseResponse<Page<User>> recommendUsers(long pageSize, long pageNum, HttpServletRequest request) {
+    public BaseResponse<Page<User>> recommendUsers(@RequestParam(value = "pageSize") long pageSize, @RequestParam(value = "pageNum") long pageNum, HttpServletRequest request) {
         User loginUserFromRequest = userService.getLoginUserFromRequest(request);
         Page<User> userPage = recommendCacheService.getRecommendUsers(pageNum, pageSize,loginUserFromRequest.getId());
         return ResultUtils.success(userPage);
@@ -165,7 +165,7 @@ public class UserController {
 
 
     @GetMapping("/match")
-    public BaseResponse<List<User>> matchUsers(long num, HttpServletRequest request) {
+    public BaseResponse<List<User>> matchUsers(@RequestParam long num, HttpServletRequest request) {
         if (num <= 0 || num > 20) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "匹配人数必须在1到20之间");
         }
@@ -181,7 +181,7 @@ public class UserController {
      * @return
      */
     @GetMapping("/search/tags")
-    public BaseResponse<List<User>> searchUsersByTagId(@RequestParam(required = false) List<String> tagNameList) {
+    public BaseResponse<List<User>> searchUsersByTagId(@RequestParam(required = false,value = "tagNameList") List<String> tagNameList) {
         //检查标签列表是否为空
         if (CollectionUtils.isEmpty(tagNameList)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "标签不能为空");

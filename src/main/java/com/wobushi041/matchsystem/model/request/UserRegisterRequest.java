@@ -2,10 +2,9 @@ package com.wobushi041.matchsystem.model.request;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.regex.Pattern;
 
@@ -28,14 +27,14 @@ public class UserRegisterRequest implements Serializable {
     /**
      * 用户账号
      */
-    @NotNull("账号不能为空")
+    @NotNull(message = "账号不能为空")
     @Size(min = 4, message = "账号不能少于4位")
     private String userAccount;
 
     /**
      * 用户密码
      */
-    @NotNull("密码不能为空")
+    @NotNull(message = "密码不能为空")
     @Size(min = 8, message = "密码不能少于8位")
     private String userPassword;
 
@@ -43,14 +42,14 @@ public class UserRegisterRequest implements Serializable {
     /**
      * 校验密码
      */
-    @NotNull("验证密码不能为空")
+    @NotNull(message = "验证密码不能为空")
     @Size(min = 8, message = "校验密码不能少于8位")
     private String checkPassword;
 
     /**
      * 星球编号
      */
-    @NotNull("星球编号不能为空")
+    @NotNull(message = "星球编号不能为空")
     @Size(max = 5, message = "星球编号过长")
     private String planetCode;
 }

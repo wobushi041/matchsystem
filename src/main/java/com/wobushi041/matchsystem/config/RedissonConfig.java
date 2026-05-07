@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 // 用于将配置文件中以特定前缀开头的属性值映射到一个Java Bean 中。
-@ConfigurationProperties(prefix = "spring.redis")
+@ConfigurationProperties(prefix = "spring.data.redis")
 @Data
 public class RedissonConfig {
 

@@ -8,11 +8,12 @@ spring:
     url: ${MYSQL_URL:jdbc:mysql://localhost:3306/matchsystem}
     username: ${MYSQL_USERNAME:root}
     password: ${MYSQL_PASSWORD:replace_me}
-  redis:
-    host: ${REDIS_HOST:localhost}
-    port: ${REDIS_PORT:6379}
-    password: ${REDIS_PASSWORD:replace_me}
-    database: ${REDIS_DATABASE:0}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:replace_me}
+      database: ${REDIS_DATABASE:0}
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}

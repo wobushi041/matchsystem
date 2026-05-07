@@ -1,5 +1,6 @@
 package com.wobushi041.matchsystem.service.impl;
 
+import kotlin.Pair;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
@@ -11,7 +12,6 @@ import com.wobushi041.matchsystem.model.domain.User;
 import com.wobushi041.matchsystem.service.UserService;
 import com.wobushi041.matchsystem.mapper.UserMapper;
 import com.wobushi041.matchsystem.utils.AlgorithmUtils;
-import kotlin.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.scripting.xmltags.ForEachSqlNode;
@@ -20,8 +20,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 import org.springframework.util.ObjectUtils;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

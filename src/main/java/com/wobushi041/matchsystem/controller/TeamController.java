@@ -19,13 +19,13 @@ import com.wobushi041.matchsystem.service.TeamService;
 import com.wobushi041.matchsystem.service.UserService;
 import com.wobushi041.matchsystem.service.UserTeamService;
 import lombok.extern.slf4j.Slf4j;
-import org.springdoc.api.annotations.ParameterObject;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -97,7 +97,7 @@ public class TeamController {
     }
 
     @GetMapping("/get")
-    public BaseResponse<Team> getTeamById(@RequestParam long id) {
+    public BaseResponse<Team> getTeamById(@RequestParam(value = "id") long id) {
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -160,7 +160,7 @@ public class TeamController {
     }
 
     @GetMapping("/list/page")
-    public BaseResponse<Page<Team>> listTeamsByPage(TeamQuery teamQuery) {
+    public BaseResponse<Page<Team>> listTeamsByPage(@ParameterObject TeamQuery teamQuery) {
         if (teamQuery == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -202,7 +202,7 @@ public class TeamController {
      * 获取我创建的队伍
      */
     @GetMapping("/list/my/create")
-    public BaseResponse<List<TeamUserVO>> listMyCreateTeams(TeamQuery teamQuery, HttpServletRequest request) {
+    public BaseResponse<List<TeamUserVO>> listMyCreateTeams(@ParameterObject TeamQuery teamQuery, HttpServletRequest request) {
         if (teamQuery == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -217,7 +217,7 @@ public class TeamController {
      * 获取我加入的队伍
      */
     @GetMapping("/list/my/join")
-    public BaseResponse<List<TeamUserVO>> listMyJoinTeams(TeamQuery teamQuery, HttpServletRequest request) {
+    public BaseResponse<List<TeamUserVO>> listMyJoinTeams(@ParameterObject TeamQuery teamQuery, HttpServletRequest request) {
         if (teamQuery == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
