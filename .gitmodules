@@ -1,6 +1,0 @@
-[submodule "matchsystem-frontend"]
-	path = matchsystem-frontend
-	url = ./matchsystem-frontend
-[submodule "matchsystem-backend"]
-	path = matchsystem-backend
-	url = ./matchsystem-backend

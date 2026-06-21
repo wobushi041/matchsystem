@@ -1,0 +1,94 @@
+HELP.md
+
+# Maven wrapper
+!.mvn/wrapper/maven-wrapper.jar
+
+# Build output
+target/
+build/
+out/
+!**/src/main/**/target/
+!**/src/test/**/target/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Java / Spring runtime files
+*.class
+*.log
+logs/
+spring.log
+hs_err_pid*
+replay_pid*
+
+# IDE / editor
+.idea/
+.vscode/
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+*.iml
+*.ipr
+*.iws
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.idea_modules/
+nbproject/private/
+nbbuild/
+nbdist/
+.nb-gradle/
+
+# OS files
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+.DS_Store
+
+# Frontend / Node
+node_modules/
+dist/
+.output/
+.nuxt/
+.next/
+.vite/
+.cache/
+.eslintcache
+.stylelintcache
+coverage/
+*.local
+*.tsbuildinfo
+.pnpm-debug.log*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment / secrets
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.pfx
+
+# Local configuration（敏感配置文件，使用模板复制后修改）
+src/main/resources/application.yml
+src/main/resources/application-prod.yml
+!src/main/resources/application-template.yml
+
+# Local data / temporary artifacts
+*.sqlite3
+*.db
+*.sql-journal
+docs/*.png
+docs/*.csv
+src/main/resources/*Excel.xlsx
+firebase-debug.log
+.vercel/
+.mise.toml
+mise.toml
